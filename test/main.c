@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <pthread.h>
 #include <stdint.h>	
+#include <time.h>
 
 #include "../libgplayer.h"
 
@@ -75,12 +76,14 @@ gint main(gint argc, gchar *argv[])
 			start_player();
 		if(command == 'S')
 		{
+			srand((unsigned)time(NULL));
 			seek_pos = rand()%120;
 			g_print("startPos = %ld.\n", (unsigned long)seek_pos);
 			seek_player(seek_pos);
 		}
 		if(command == '1')
 		{
+			srand((unsigned)time(NULL));
 			seek_pos = rand()%2000;
 			g_print("startPos = %ld.\n", (unsigned long)seek_pos);
 			seek_player(seek_pos);

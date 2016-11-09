@@ -22,7 +22,11 @@ typedef struct _CustomData {
   
   gchar       *url;
   gint64      startPos;
-  gboolean playing;  /* Playing or Paused */
+  gint64      duration;
+  gboolean    seek_enabled;
+  gboolean    live_stream;
+  gboolean    playing;  /* Playing or Paused */
+  gboolean    terminate;
 } CustomData;
 
 

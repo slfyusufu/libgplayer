@@ -15,6 +15,7 @@ bus_call (GstBus     *bus,
 	switch (GST_MESSAGE_TYPE (msg)) {
 		case GST_MESSAGE_EOS:
 			g_print ("End of stream\n");
+			gst_element_set_state (player_data.pipeline, GST_STATE_READY);
 			g_main_loop_quit (loop);
 			break;
 	
@@ -27,8 +28,15 @@ bus_call (GstBus     *bus,
 	
 			g_printerr ("Error: %s\n", error->message);
 			g_error_free (error);
-	
+
+			gst_element_set_state (player_data.pipeline, GST_STATE_READY);
 			g_main_loop_quit (loop);
+			break;
+		}
+		case GST_MESSAGE_CLOCK_LOST: {
+			/* Get a new clock */  
+			gst_element_set_state (player_data.pipeline, GST_STATE_PAUSED);  
+			gst_element_set_state (player_data.pipeline, GST_STATE_PLAYING);  
 			break;
 		}
 		case GST_MESSAGE_STATE_CHANGED: {
@@ -39,11 +47,57 @@ bus_call (GstBus     *bus,
 				g_print ("Pipeline state changed from %s to %s:\n",
 				gst_element_state_get_name (old_state), gst_element_state_get_name (new_state));
 			}
+			/* Remember whether we are in the PLAYING state or not */
+			player_data.playing = (new_state == GST_STATE_PLAYING);
+         
+			if (player_data.playing && (GST_MESSAGE_SRC (msg) == GST_OBJECT (player_data.pipeline)))
+			{
+				/* We just moved to PLAYING. Check if seeking is possible */
+				GstQuery *query;
+				gint64 start, end;
+				query = gst_query_new_seeking (GST_FORMAT_TIME);
+				if (gst_element_query (player_data.pipeline, query))
+				{
+					gst_query_parse_seeking (query, NULL, &player_data.seek_enabled, &start, &end);
+					if (player_data.seek_enabled) {
+						g_print ("Seeking is ENABLED from %" GST_TIME_FORMAT " to %" GST_TIME_FORMAT "\n",
+						GST_TIME_ARGS (start), GST_TIME_ARGS (end));
+					} else {
+						g_print ("Seeking is DISABLED for this stream.\n");
+					}
+				} else {
+					g_printerr ("Seeking query failed.");
+				}
+				gst_query_unref (query);
+				
+				GstFormat fmt = GST_FORMAT_TIME;
+				gint64 current = -1;
+				
+				/* Query the current position of the stream */
+				if (!gst_element_query_position (player_data.pipeline, fmt, &current)) {
+					g_printerr ("Could not query current position.\n");
+				}
+				
+				/* If we didn't know it yet, query the stream duration */
+				if (!GST_CLOCK_TIME_IS_VALID (player_data.duration)) {
+					if (!gst_element_query_duration (player_data.pipeline, fmt, &player_data.duration)) {
+						g_printerr ("Could not query current duration.\n");
+					}
+				}
+				/* Print current position and total duration */
+				g_print ("Position %" GST_TIME_FORMAT " / %" GST_TIME_FORMAT "\r",
+						GST_TIME_ARGS (current), GST_TIME_ARGS (player_data.duration));
+			}
 		
 			break;
 		}
 		default:
+		{
+			if(GST_MESSAGE_SRC (msg) == GST_OBJECT (player_data.pipeline)){
+				g_print("GST_MSG = 0x%x.\n",GST_MESSAGE_TYPE (msg));
+			}
 			break;
+		}
 	}
 return TRUE;
 }
@@ -53,6 +107,13 @@ open_player(gchar *url)
 {
 	gint ret;
 	char buffer [MAX_BUF_SIZE];
+	
+	//Init varible of player
+	player_data.playing = FALSE;
+	player_data.terminate = FALSE;
+	player_data.seek_enabled = FALSE;
+	player_data.live_stream = FALSE;
+	player_data.duration = GST_CLOCK_TIME_NONE;
 	
 	/* init GStreamer */
 	//gst_init (&argc, &argv);
@@ -151,10 +212,12 @@ change_state(gboolean state)
 	else
 		ret = gst_element_set_state (player_data.pipeline, GST_STATE_PAUSED);
 	
-	if (ret == GST_STATE_CHANGE_FAILURE) {
+	if(ret == GST_STATE_CHANGE_FAILURE) {
 		g_printerr ("Unable to set the pipeline to the %s state.\n", (state?"playing":"pause"));
 		gst_object_unref (player_data.pipeline);
 		return -1;
+	} else if(ret == GST_STATE_CHANGE_NO_PREROLL) {	
+		player_data.live_stream = TRUE;
 	}
 	player_data.playing = state;
 	
@@ -165,15 +228,19 @@ gint
 seek_player(gint64 seek_pos)
 {
 	gboolean ret;
-	ret = gst_element_seek_simple(player_data.pipeline, GST_FORMAT_TIME,
-								(GstSeekFlags)(GST_SEEK_FLAG_FLUSH | GST_SEEK_FLAG_KEY_UNIT/*GST_SEEK_FLAG_ACCURATE*/),
-								GST_SECOND * seek_pos);
-	if(!ret)
+	if(player_data.seek_enabled)
 	{
-		g_printerr("Seek error, or the stream can not be seek!!\n");
-		return -1;
+		ret = gst_element_seek_simple(player_data.pipeline, GST_FORMAT_TIME,
+									(GstSeekFlags)(GST_SEEK_FLAG_FLUSH | GST_SEEK_FLAG_KEY_UNIT/*GST_SEEK_FLAG_ACCURATE*/),
+									GST_SECOND * seek_pos);
+		if(!ret)
+		{
+			g_printerr("Seek error!!\n");
+			return -1;
+		}
+	} else {
+		g_printerr("This stream can not be seek!!\n");
 	}
-	
 	return 0;
 }
 
