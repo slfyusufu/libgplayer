@@ -103,10 +103,14 @@ return TRUE;
 }
 
 gint
-open_player(gchar *url)
+open_player(gchar *url, unsigned int sx, unsigned int sy, unsigned int disp_width, unsigned int disp_height)
 {
 	gint ret;
 	char buffer [MAX_BUF_SIZE];
+	char str_sx[8];
+	char str_sy[8];
+	char str_disp_width[8];
+	char str_disp_height[8];
 	
 	//Init varible of player
 	player_data.playing = FALSE;
@@ -115,6 +119,11 @@ open_player(gchar *url)
 	player_data.live_stream = FALSE;
 	player_data.duration = GST_CLOCK_TIME_NONE;
 	
+	sprintf(str_sx, "%d", sx);
+	sprintf(str_sy, "%d", sy);
+	sprintf(str_disp_width, "%d", disp_width);
+	sprintf(str_disp_height, "%d", disp_height);
+		
 	/* init GStreamer */
 	//gst_init (&argc, &argv);
 	gst_init (NULL, NULL);
@@ -134,6 +143,8 @@ open_player(gchar *url)
 			return -1;
 		}
 		#if 0 //for TCC test
+		//(void)sprintf (buffer, "playbin uri=%s audio-sink=%s video-sink=v4l2sink overlay-top=%s overlay-left=%s overlay-width=%s overlay-height=%s %s",
+		//						url, AUDIO_SINK_ARG, str_sx, str_sy, str_disp_width, str_disp_height, EXTRE_ARGS);
 		(void)sprintf (buffer, "playbin uri=%s audio-sink=%s video-sink=%s %s",
 								url, AUDIO_SINK_ARG, VIDEO_SINK_ARG, EXTRE_ARGS);
 		#else //for PC test

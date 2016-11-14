@@ -43,7 +43,7 @@ extern "C"{
  * 
  *  Init gstreamer and start to play. it contain a loop, so don't forget to close it.
  */
-gint open_player(gchar *url);
+gint open_player(gchar *url, unsigned int sx, unsigned int sy, unsigned int disp_width, unsigned int disp_height);
 
 /* start_player
  * 

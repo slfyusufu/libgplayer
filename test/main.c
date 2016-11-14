@@ -15,8 +15,7 @@ gboolean running;
 
 static void *PlayThread(void *arg)
 {
-	open_player(url);
-	while(running);
+	open_player(url, 0, 0, 800, 480);
 	pthread_exit((void *)"media process thread exit\n");
 
 	return NULL;	
