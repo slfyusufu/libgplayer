@@ -16,8 +16,9 @@ gboolean running;
 static void *PlayThread(void *arg)
 {
 	open_player(url, 0, 0, 800, 480);
+	printf("play finished.....\n");
 	pthread_exit((void *)"media process thread exit\n");
-
+	printf("playthread exit\n");
 	return NULL;	
 }
 
@@ -70,7 +71,7 @@ gint main(gint argc, gchar *argv[])
 			//running =0;
 		}
 		if(command == 'p')
-			stop_player();
+			pause_player();
 		if(command == 's')
 			start_player();
 		if(command == 'S')
@@ -87,6 +88,8 @@ gint main(gint argc, gchar *argv[])
 			g_print("startPos = %ld.\n", (unsigned long)seek_pos);
 			seek_player(seek_pos);
 		}
+		if(command == 'g')
+			poll_msg();
 	}
 	
 	return 0;

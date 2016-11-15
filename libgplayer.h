@@ -15,6 +15,13 @@
 #define VIDEO_SINK_ARG "v4l2sink overlay-top=0 overlay-left=0 overlay-width=800 overlay-height=480"
 #define EXTRE_ARGS     "ring-buffer-max-size=8192000"
 
+typedef struct _WindowPos {
+	unsigned int sx;
+	unsigned int sy;
+	unsigned int disp_width;
+	unsigned int disp_height;
+} WindowPos;
+
 typedef struct _CustomData {
   GMainLoop  *loop;
   GstElement *pipeline;
@@ -23,10 +30,14 @@ typedef struct _CustomData {
   gchar       *url;
   gint64      startPos;
   gint64      duration;
+  guint       watchID;
   gboolean    seek_enabled;
   gboolean    live_stream;
   gboolean    playing;  /* Playing or Paused */
   gboolean    terminate;
+  WindowPos   windowpos;
+  
+  pthread_t   player_thread;
 } CustomData;
 
 
@@ -55,7 +66,7 @@ gint start_player(void);
  * 
  *  Change pipeline state to GST_STATE_PAUSED, video streaming will paused.
  */
-gint stop_player(void);
+gint pause_player(void);
 
 /* change_state
  * @state: pipeline state, 1 means GST_STATE_PLAYING, 0 means GST_STATE_PAUSED.
@@ -77,6 +88,8 @@ gint seek_player(gint64 seek_pos);
  * Close gstreamer player, free resource.
  */
 gint release_player(void);
+
+gint poll_msg(void);
 
 #ifdef	__cplusplus
 }
