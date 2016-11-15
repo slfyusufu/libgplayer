@@ -4,8 +4,10 @@
 # Makefile for gstreamer
 #PLATFORM = ARM
 #PLATFORM = ARM_ADT
-PLATFORM = PC
+#PLATFORM = PC
+PLATFORM = PC_HOME
 
+######################################################################################################################
 ifeq ($(PLATFORM), ARM)
 
 CC = arm-none-linux-gnueabi-gcc
@@ -22,6 +24,7 @@ LDFLAGS += -L/home/yusufu/mywork/open-source/zlib/zlib_git/zlib_arm/lib -lz
 
 endif
 
+######################################################################################################################
 ifeq ($(PLATFORM), ARM_ADT)
 
 CC = /home/yusufu/mywork/workspace/qt/sdk/sysroots/x86_64-oesdk-linux/usr/bin/arm-telechips-linux-gnueabi/arm-none-linux-gnueabi-gcc
@@ -36,6 +39,7 @@ LDFLAGS += -L/home/yusufu/mywork/workspace/qt/sdk/sysroots/cortexa7-vfp-neon-tel
 
 endif
 
+######################################################################################################################
 ifeq ($(PLATFORM), PC)
 export LD_LIBRARY_PATH=/home/yusufu/mywork/open-source/glib/glib-2.40/out-pc/lib:$LD_LIBRARY_PATH
 export LD_LIBRARY_PATH=/home/yusufu/mywork/open-source/gstreamer/gst-out/lib:$LD_LIBRARY_PATH
@@ -52,6 +56,24 @@ CFLAGS += -I/home/yusufu/mywork/open-source/gstreamer/gst-out/include/gstreamer-
 LDFLAGS +=  -L/home/yusufu/mywork/open-source/gstreamer/gst-out/lib -lgstreamer-1.0 
 
 endif
+
+######################################################################################################################
+ifeq ($(PLATFORM), PC_HOME)
+
+CC = gcc
+CFLAGS  = -O2 -Wall -fPIC -D_GNU_SOURCE -lpthread -shared 
+
+CFLAGS  += `pkg-config --cflags glib-2.0`
+LDFLAGS += `pkg-config --libs glib-2.0`
+
+CFLAGS  += `pkg-config --cflags gobject-2.0`
+LDFLAGS += `pkg-config --libs gobject-2.0`
+
+CFLAGS  += `pkg-config --cflags gstreamer-1.0`
+LDFLAGS += `pkg-config --libs gstreamer-1.0`
+endif
+
+######################################################################################################################
 
 #SOURCES	= init.c
 #SOURCES	= playmp3.c
