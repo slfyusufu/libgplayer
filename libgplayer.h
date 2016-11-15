@@ -89,7 +89,6 @@ gint seek_player(gint64 seek_pos);
  */
 gint release_player(void);
 
-gint poll_msg(void);
 
 #ifdef	__cplusplus
 }

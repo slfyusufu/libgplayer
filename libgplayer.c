@@ -9,10 +9,6 @@ Message_handler(CustomData *player,
 				GstMessage *msg
 				)
 {
-	//GMainLoop *loop = (GMainLoop *) data;
-	//CustomData *player = (CustomData *)data;
-	//g_print ("handle message!\n");
-	
 	switch (GST_MESSAGE_TYPE (msg)) {
 		case GST_MESSAGE_EOS:
 			g_print ("End of stream\n");
@@ -102,7 +98,7 @@ Message_handler(CustomData *player,
 			break;
 		}
 	}
-return TRUE;
+	return TRUE;
 }
 
 static gint
@@ -140,10 +136,10 @@ init_player(CustomData *player)
 	}
 	else
 	{
-		g_print("Input path %s\n", player->url);	
+		//g_print("Input path %s\n", player->url);	
 		if(strlen(player->url)>MAX_BUF_SIZE)
 		{
-			g_print("Path is too long.\n");	
+			g_print("Path is too long. [%s]\n", player->url);	
 			return -1;
 		}
 		#if 0 //for TCC test
@@ -191,7 +187,7 @@ init_player(CustomData *player)
 	} while(!player->terminate);
 
 	g_print("End of Play!\n");
-	return 0;
+	return 1;
 }
 
 static void *
@@ -200,7 +196,8 @@ play_thread(void *arg)
 	CustomData *player = (CustomData *)arg;
 	
 	init_player(player);
-	pthread_exit((void *)"play thread exit\n");
+	pthread_exit(0);
+	g_print("Pthread exit!\n");
 	return NULL;
 }
 
@@ -233,10 +230,7 @@ start_player(void)
 	gint ret;
 	
 	ret = change_state(1);
-	if(ret != 0)
-		return -1;
-	
-	return 0;
+	return ret;
 }
 
 gint
@@ -245,10 +239,7 @@ pause_player(void)
 	gint ret;
 	
 	ret = change_state(0);
-	if(ret != 0)
-		return -1;
-	
-	return 0;
+	return ret;
 }
 
 gint

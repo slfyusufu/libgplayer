@@ -64,7 +64,7 @@ endif
 ifeq ($(PLATFORM), PC_HOME)
 
 CC = gcc
-CFLAGS  = -O2 -Wall -fPIC -D_GNU_SOURCE -lpthread -shared 
+CFLAGS  = -O2 -Wall -fPIC -D_GNU_SOURCE -lpthread 
 
 CFLAGS  += `pkg-config --cflags glib-2.0`
 LDFLAGS += `pkg-config --libs glib-2.0`
@@ -76,6 +76,8 @@ CFLAGS  += `pkg-config --cflags gstreamer-1.0`
 LDFLAGS += `pkg-config --libs gstreamer-1.0`
 endif
 
+CFLAGS += -I/home/yusufu/mywork/workspace/gstreamer/libgplayer
+LDFLAGS += -L/home/yusufu/mywork/workspace/gstreamer/libgplayer -lgplayer
 ######################################################################################################################
 
 #SOURCES	= init.c

@@ -8,67 +8,26 @@
 
 #include "../libgplayer.h"
 
-pthread_t _PlayThread;
 char *url=NULL;
 gint64 seek_pos=0;
-gboolean running;
+gboolean running=1;
 
-static void *PlayThread(void *arg)
-{
-	open_player(url, 0, 0, 800, 480);
-	printf("play finished.....\n");
-	pthread_exit((void *)"media process thread exit\n");
-	printf("playthread exit\n");
-	return NULL;	
-}
 
-static void StartPlayThread(void *arg)
-{
-	int err;
-	g_print("Start thread....\n");
-	running =1;
-
-	err = pthread_create(&_PlayThread, NULL, PlayThread, (void *)arg);
-	if (err != 0)
-	{
-		running =0;
-		release_player();
-		perror("create thread failed: \n");
-	}
-}
-static void StopPlayThread()
-{
-	//if(player_data.playing)
-	{
-		void *res;
-		int err;
-		
-		running =0;
-		release_player();
-		err = pthread_join(_PlayThread, &res);
-		if (err != 0)
-		{
-			perror("update playtime thread join faild: ");
-		}
-	}
-	g_print("Stop thread....\n");
-}
-
-gint main(gint argc, gchar *argv[])
+int main(gint argc, gchar *argv[])
 {
 	char command;
 	
 	url = argv[1];
 	
-	StartPlayThread(NULL);
+	open_player(url, 0, 0, 800, 480);
 
 	while(running)
 	{
 		command=getchar();
 		if(command == 'q')
 		{
-			StopPlayThread();
-			//running =0;
+			release_player();
+			running =0;
 		}
 		if(command == 'p')
 			pause_player();
@@ -88,9 +47,8 @@ gint main(gint argc, gchar *argv[])
 			g_print("startPos = %ld.\n", (unsigned long)seek_pos);
 			seek_player(seek_pos);
 		}
-		if(command == 'g')
-			poll_msg();
+
 	}
-	
+	//g_print("Exit....\n");
 	return 0;
 }
