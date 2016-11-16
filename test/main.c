@@ -12,13 +12,20 @@ char *url=NULL;
 gint64 seek_pos=0;
 gboolean running=1;
 
+void eos_cb(void)
+{
+	release_player();
+	running = 0;
+	//do something you need, when end of stream;
+}
 
 int main(gint argc, gchar *argv[])
 {
 	char command;
-	
+	long int pos, dur;
 	url = argv[1];
 	
+	EndOfStream_cb(eos_cb);
 	open_player(url, 0, 0, 800, 480);
 
 	while(running)
@@ -36,7 +43,7 @@ int main(gint argc, gchar *argv[])
 		if(command == 'S')
 		{
 			srand((unsigned)time(NULL));
-			seek_pos = rand()%120;
+			seek_pos = rand()%200;
 			g_print("startPos = %ld.\n", (unsigned long)seek_pos);
 			seek_player(seek_pos);
 		}
@@ -47,8 +54,21 @@ int main(gint argc, gchar *argv[])
 			g_print("startPos = %ld.\n", (unsigned long)seek_pos);
 			seek_player(seek_pos);
 		}
-
+		if(command == '2')
+		{
+			seek_player(180);
+		}
+		if(command == 'd')
+		{
+			pos= get_position();
+			dur= get_duration();
+			printf("postion: %ld/%ld.\n", pos/1000000, dur/1000000);
+		}
+		if(command == 'g')
+		{
+			printf("The player is %s.\n",get_status() ? "playing" : "paused");
+		}
 	}
-	//g_print("Exit....\n");
+	g_print("Exit....\n");
 	return 0;
 }

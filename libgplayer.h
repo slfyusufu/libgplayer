@@ -1,3 +1,13 @@
+//********************************************************************************************
+/**
+ * @file        libgplayer.h
+ * @brief		Library of gstreamer player for application use. 
+ *
+ * @author      Yusuf.Sha, Telechips Shenzhen Rep.
+ * @date        2016/11/08
+ */
+//********************************************************************************************
+
 #ifndef	__LIBGPLAYER_H__
 #define	__LIBGPLAYER_H__
 
@@ -40,6 +50,7 @@ typedef struct _CustomData {
   pthread_t   player_thread;
 } CustomData;
 
+typedef void (*EndOfStream_Callback)(void);
 
 #ifdef	__cplusplus
 extern "C"{
@@ -51,8 +62,12 @@ extern "C"{
  * @url: video stream source, format is like below:
  * 		file:///home/root/abc.mp4
  * 	or	http://192.168.1.2/abc.mp4
+ * @sx: start x of display window; normally it is 0;
+ * @sy: start y of display window; normally it is 0;
+ * @width: the width of display window; normally it is LCD width;(full screen)
+ * @height: the height of diplay window; normally it is LCD height;(full screen)
  * 
- *  Init gstreamer and start to play. it contain a loop, so don't forget to close it.
+ * Init gstreamer and start a thread to play. it contain a thread, so don't forget to close it.
  */
 gint open_player(gchar *url, unsigned int sx, unsigned int sy, unsigned int disp_width, unsigned int disp_height);
 
@@ -89,6 +104,29 @@ gint seek_player(gint64 seek_pos);
  */
 gint release_player(void);
 
+/* get_position
+ * 
+ * Get postion of stream, and return time in nanoseconds.
+ */
+gint64 get_position (void);
+
+/* get_duration
+ * 
+ * Get duration of stream, and return time in nanoseconds.
+ */
+gint64 get_duration (void);
+
+/* get_status
+ * 
+ * Get the playing status, 1: playing; 0: pause
+ */
+gboolean get_status (void);
+
+/* EndOfStream_cb
+ * @cb_func: callback function which when eos happened.
+ * The callback function of EOS(End Of Stream). Notify application when eos happen.
+ */
+void EndOfStream_cb(EndOfStream_Callback cb_func);
 
 #ifdef	__cplusplus
 }

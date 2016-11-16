@@ -1,8 +1,23 @@
-//////////////////////////////////////////////////
+//********************************************************************************************
+/*
+ * @file        libgplayer.c
+ * @brief		Library of gstreamer player for application use. 
+ *
+ * @author      Yusuf.Sha, Telechips Shenzhen Rep.
+ * @date        2016/11/08
+ */
+//********************************************************************************************
 
 #include "libgplayer.h"
 
 static CustomData player_data;
+static EndOfStream_Callback g_eos_callback=NULL;
+
+/* Set Callback Functions */
+void EndOfStream_cb(EndOfStream_Callback cb_func)
+{
+	g_eos_callback = cb_func;
+}
 
 static gboolean
 Message_handler(CustomData *player,
@@ -14,7 +29,8 @@ Message_handler(CustomData *player,
 			g_print ("End of stream\n");
 			//gst_element_set_state (player->pipeline, GST_STATE_READY);
 			player->terminate = 1;
-			//g_main_loop_quit (loop);
+			if(g_eos_callback != NULL)
+				g_eos_callback();
 			break;
 	
 		case GST_MESSAGE_ERROR: {
@@ -29,7 +45,6 @@ Message_handler(CustomData *player,
 
 			gst_element_set_state (player->pipeline, GST_STATE_READY);
 			player-> terminate = 1;
-			//g_main_loop_quit (loop);
 			break;
 		}
 		case GST_MESSAGE_CLOCK_LOST: {
@@ -59,8 +74,8 @@ Message_handler(CustomData *player,
 				{
 					gst_query_parse_seeking (query, NULL, &player->seek_enabled, &start, &end);
 					if (player->seek_enabled) {
-						g_print ("Seeking is ENABLED from %" GST_TIME_FORMAT " to %" GST_TIME_FORMAT "\n",
-						GST_TIME_ARGS (start), GST_TIME_ARGS (end));
+						//g_print ("Seeking is ENABLED from %" GST_TIME_FORMAT " to %" GST_TIME_FORMAT "\n",
+						;//GST_TIME_ARGS (start), GST_TIME_ARGS (end));
 					} else {
 						g_print ("Seeking is DISABLED for this stream.\n");
 					}
@@ -84,8 +99,8 @@ Message_handler(CustomData *player,
 					}
 				}
 				/* Print current position and total duration */
-				g_print ("Position %" GST_TIME_FORMAT " / %" GST_TIME_FORMAT "\r",
-						GST_TIME_ARGS (current), GST_TIME_ARGS (player->duration));
+				//g_print ("Position %" GST_TIME_FORMAT " / %" GST_TIME_FORMAT "\r",
+				//		GST_TIME_ARGS (current), GST_TIME_ARGS (player->duration));
 			}
 		
 			break;
@@ -131,7 +146,8 @@ init_player(CustomData *player)
 	/* make sure we have a URI */
 	if (player->url == NULL)
 	{
-		g_print ("Usage: No <URI>\n");
+		g_print ("Usage: ./main http://192.168.1.2/abc.mp4\n");
+		g_print ("    Or ./main file:///home/root/abc.mp4\n");		
 		return -1;
 	}
 	else
@@ -139,7 +155,7 @@ init_player(CustomData *player)
 		//g_print("Input path %s\n", player->url);	
 		if(strlen(player->url)>MAX_BUF_SIZE)
 		{
-			g_print("Path is too long. [%s]\n", player->url);	
+			g_print("Path is too long. [%s]\n", player->url);
 			return -1;
 		}
 		#if 0 //for TCC test
@@ -167,13 +183,14 @@ init_player(CustomData *player)
 	if(player->bus == NULL)
 		g_printerr("Create bus_watch failed!!\n");
 		
-//	gst_bus_add_signal_watch (player_data.bus);
-//	g_signal_connect (player_data.bus, "message::state-changed", G_CALLBACK (cb_message_state_change), NULL);
+	//Below two are vilid if using main_loop;
+	//gst_bus_add_signal_watch (player_data.bus);
+	//g_signal_connect (player_data.bus, "message::state-changed", G_CALLBACK (cb_message_state_change), NULL);
 	
 	//================ Start playing ===================
 	ret = change_state(1);
 	if(ret != 0)
-		return -1;
+		return ret;
 
 	/* now do...while */	
 	do
@@ -186,8 +203,8 @@ init_player(CustomData *player)
 		}
 	} while(!player->terminate);
 
-	g_print("End of Play!\n");
-	return 1;
+	g_print("Player is terminated!\n");
+	return 0;
 }
 
 static void *
@@ -195,9 +212,9 @@ play_thread(void *arg)
 {
 	CustomData *player = (CustomData *)arg;
 	
+	pthread_detach(pthread_self());
 	init_player(player);
 	pthread_exit(0);
-	g_print("Pthread exit!\n");
 	return NULL;
 }
 
@@ -301,25 +318,52 @@ seek_player(gint64 seek_pos)
 	return 0;
 }
 
+gint64
+get_position (void)
+{
+	gint64 pos=-1;
+	GstFormat format = GST_FORMAT_TIME;
+
+	if (!gst_element_query_position (player_data.pipeline, format, &pos))
+	{
+		g_printerr("Query position failed!!\n");
+		return -1;
+	}
+	return pos;
+}
+
+gint64
+get_duration (void)
+{
+	gint64 dur=-1;
+	GstFormat format = GST_FORMAT_TIME;
+
+	if(!gst_element_query_duration (player_data.pipeline, format, &dur)) 
+	{
+		g_printerr("Query duration failed!!\n");
+		return -1;
+	}
+	return dur;
+}
+
+gboolean
+get_status (void)
+{
+	return player_data.playing;
+}
+
 gint
 release_player(void)
-{
-	int err;
-	
+{	
 	/* clean up */
 	g_print("Play finished! Start to Free!\n");
-	gst_element_set_state (player_data.pipeline, GST_STATE_NULL);
-	//g_main_loop_quit (player_data.loop);
-	player_data.terminate = 1;
-	gst_object_unref (player_data.pipeline);
-	g_print("Free Finished!\n");
-	
-	err = pthread_join(player_data.player_thread, NULL);
-	if (err != 0)
+	if(player_data.pipeline != NULL)
 	{
-		perror("Thread join faild: ");
+		gst_element_set_state (player_data.pipeline, GST_STATE_NULL);
+		player_data.terminate = 1;
+		gst_object_unref (player_data.pipeline);
 	}
-	g_print("Stop player!\n");
+	g_print("Player Released and Freed!\n");
 
 	return 0;
 }
