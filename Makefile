@@ -10,24 +10,23 @@ PLATFORM = ARM
 ######################################################################################################################
 ifeq ($(PLATFORM), ARM)
 
-SOURCE_PATH=/home/s100018/mywork/linux/telechips/als-linux-official/build/tcc8925_carbit/tmp/work/cortexa5-vfp-neon-telechips-linux-gnueabi
-
-
 CC = arm-none-linux-gnueabi-gcc
 CFLAGS  = -O2 -Wall -fPIC -D_GNU_SOURCE -lpthread -shared
 #-static -lpthread -ldl
-#CFLAGS += -I/home/yusufu/mywork/open-source/glib/glib-2.40/out-arm/include/glib-2.0/
-#CFLAGS += -I/home/yusufu/mywork/open-source/glib/glib-2.40/out-arm/lib/glib-2.0/include/
-#LDFLAGS +=  -L/home/yusufu/mywork/open-source/glib/glib-2.40/out-arm/lib -lgobject-2.0 -lglib-2.0
-#CFLAGS += -I/home/yusufu/mywork/linux/telechips/linux-platform/prebuilts/include/gstreamer-1.0
-#LDFLAGS += -L/home/yusufu/mywork/linux/telechips/linux-platform/myout/tccgst/lib -lgstreamer-1.0
-#CFLAGS += -I/home/yusufu/mywork/open-source/zlib/zlib_git/zlib_arm/include
-#LDFLAGS += -L/home/yusufu/mywork/open-source/zlib/zlib_git/zlib_arm/lib -lz
+CFLAGS += -I/home/yusufu/mywork/open-source/glib/glib-2.40/out-arm/include/glib-2.0/
+CFLAGS += -I/home/yusufu/mywork/open-source/glib/glib-2.40/out-arm/lib/glib-2.0/include/
+LDFLAGS +=  -L/home/yusufu/mywork/open-source/glib/glib-2.40/out-arm/lib -lgobject-2.0 -lglib-2.0
+CFLAGS += -I/home/yusufu/mywork/linux/telechips/linux-platform/prebuilts/include/gstreamer-1.0
+LDFLAGS += -L/home/yusufu/mywork/linux/telechips/linux-platform/myout/tccgst/lib -lgstreamer-1.0
+CFLAGS += -I/home/yusufu/mywork/open-source/zlib/zlib_git/zlib_arm/include
+LDFLAGS += -L/home/yusufu/mywork/open-source/zlib/zlib_git/zlib_arm/lib -lz
 
 endif
 
 ######################################################################################################################
 ifeq ($(PLATFORM), ARM_228)
+
+SOURCE_PATH=/home/s100018/mywork/linux/telechips/als-linux-official/build/tcc8925_carbit/tmp/work/cortexa5-vfp-neon-telechips-linux-gnueabi
 
 CC = arm-none-linux-gnueabi-gcc
 CFLAGS  = -O2 -Wall -fPIC -D_GNU_SOURCE 
