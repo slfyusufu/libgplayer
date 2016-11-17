@@ -2,8 +2,8 @@
 # Makefile
 #
 # Makefile for gstreamer
-#PLATFORM = ARM
-PLATFORM = ARM_228
+PLATFORM = ARM
+#PLATFORM = ARM_228
 #PLATFORM = PC
 #PLATFORM = PC_HOME
 
@@ -11,7 +11,7 @@ PLATFORM = ARM_228
 ifeq ($(PLATFORM), ARM)
 
 CC = arm-none-linux-gnueabi-gcc
-CFLAGS  = -lrt -O2 -Wall -fPIC -D_GNU_SOURCE -lpthread
+CFLAGS  = -O2 -Wall -fPIC -D_GNU_SOURCE -lpthread
 #-static -lpthread -ldl
 CFLAGS += -I/home/yusufu/mywork/open-source/glib/glib-2.40/out-arm/include/glib-2.0/
 CFLAGS += -I/home/yusufu/mywork/open-source/glib/glib-2.40/out-arm/lib/glib-2.0/include/
