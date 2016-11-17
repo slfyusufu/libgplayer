@@ -158,7 +158,7 @@ init_player(CustomData *player)
 			g_print("Path is too long. [%s]\n", player->url);
 			return -1;
 		}
-		#if 0 //for TCC test
+		#if 1 //for TCC test
 		//(void)sprintf (buffer, "playbin uri=%s audio-sink=%s video-sink=v4l2sink overlay-top=%s overlay-left=%s overlay-width=%s overlay-height=%s %s",
 		//						player->url, AUDIO_SINK_ARG, str_sx, str_sy, str_disp_width, str_disp_height, EXTRE_ARGS);
 		(void)sprintf (buffer, "playbin uri=%s audio-sink=%s video-sink=%s %s",

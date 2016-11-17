@@ -2,10 +2,10 @@
 # Makefile
 #
 # Makefile for gstreamer
-#PLATFORM = ARM
+PLATFORM = ARM
 #PLATFORM = ARM_ADT
 #PLATFORM = PC
-PLATFORM = PC_HOME
+#PLATFORM = PC_HOME
 
 ######################################################################################################################
 ifeq ($(PLATFORM), ARM)

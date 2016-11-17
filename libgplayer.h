@@ -69,26 +69,26 @@ extern "C"{
  * 
  * Init gstreamer and start a thread to play. it contain a thread, so don't forget to close it.
  */
-gint open_player(gchar *url, unsigned int sx, unsigned int sy, unsigned int disp_width, unsigned int disp_height);
+extern gint open_player(gchar *url, unsigned int sx, unsigned int sy, unsigned int disp_width, unsigned int disp_height);
 
 /* start_player
  * 
  *  Change pipeline state to GST_STATE_PLAYING, video streaming will start to play.
  */
-gint start_player(void);
+extern gint start_player(void);
 
 /* stop_player
  * 
  *  Change pipeline state to GST_STATE_PAUSED, video streaming will paused.
  */
-gint pause_player(void);
+extern gint pause_player(void);
 
 /* change_state
  * @state: pipeline state, 1 means GST_STATE_PLAYING, 0 means GST_STATE_PAUSED.
  * 
  *  This function combine start_player() and stop_player(), it can be controled by state parameter.
  */
-gint change_state(gboolean state);
+extern gint change_state(gboolean state);
 
 /* seek_player
  * @seek_pos: the value which from 0 to duration of stream.
@@ -96,31 +96,31 @@ gint change_state(gboolean state);
  * Seek video stream to a given position, its unit is second, and range is from 0 to duration of stream.
  * 
  */
-gint seek_player(gint64 seek_pos);
+extern gint seek_player(gint64 seek_pos);
 
 /* release_player
  * 
  * Close gstreamer player, free resource.
  */
-gint release_player(void);
+extern gint release_player(void);
 
 /* get_position
  * 
  * Get postion of stream, and return time in nanoseconds.
  */
-gint64 get_position (void);
+extern gint64 get_position (void);
 
 /* get_duration
  * 
  * Get duration of stream, and return time in nanoseconds.
  */
-gint64 get_duration (void);
+extern gint64 get_duration (void);
 
 /* get_status
  * 
  * Get the playing status, 1: playing; 0: pause
  */
-gboolean get_status (void);
+extern gboolean get_status (void);
 
 /* EndOfStream_cb
  * @cb_func: callback function which when eos happened.
