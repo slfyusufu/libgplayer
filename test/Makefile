@@ -27,6 +27,8 @@ endif
 ######################################################################################################################
 ifeq ($(PLATFORM), ARM_228)
 
+SOURCE_PATH=/home/s100018/mywork/linux/telechips/als-linux-official/build/tcc8925_carbit/tmp/work/cortexa5-vfp-neon-telechips-linux-gnueabi
+
 CC = arm-none-linux-gnueabi-gcc
 CFLAGS  = -O2 -Wall -fPIC -D_GNU_SOURCE 
 #-static -lpthread -ldl
