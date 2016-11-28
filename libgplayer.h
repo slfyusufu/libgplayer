@@ -19,11 +19,10 @@
 #include <stdint.h>	
 
 #define MAX_BUF_SIZE  1024
-#define LCD_WIDTH   320
-#define LCD_HEIGHT  240
 #define AUDIO_SINK_ARG "alsasink device=\"plug:mainvol\""
-#define VIDEO_SINK_ARG "v4l2sink overlay-top=0 overlay-left=0 overlay-width=800 overlay-height=480"
+#define VIDEO_SINK_ARG "v4l2sink"
 #define EXTRE_ARGS     "ring-buffer-max-size=8192000"
+#define GPLAYER_VERSION "v0.4"
 
 typedef struct _WindowPos {
 	unsigned int sx;
@@ -33,12 +32,13 @@ typedef struct _WindowPos {
 } WindowPos;
 
 typedef struct _CustomData {
-  GMainLoop  *loop;
-  GstElement *pipeline;
+  //GMainLoop  *loop;
   GstBus     *bus;
+  GstElement *pipeline;
+  GstElement *video_sink;
   
-  gchar       *url;
-  gint64      startPos;
+  gchar       url[MAX_BUF_SIZE];
+  //gint64      startPos;
   gint64      duration;
   guint       watchID;
   gboolean    seek_enabled;

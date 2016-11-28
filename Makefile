@@ -1,7 +1,8 @@
 #
 # Makefile
 #
-# Makefile for gstreamer
+# Makefile for gstreamer player
+
 PLATFORM = ARM
 #PLATFORM = ARM_228
 #PLATFORM = PC
@@ -10,7 +11,10 @@ PLATFORM = ARM
 ######################################################################################################################
 ifeq ($(PLATFORM), ARM)
 
-CC = arm-none-linux-gnueabi-gcc
+PATH_ARM_NONE_LINUX_GNUEABI := /opt/arm-2013.11
+STRIP = $(PATH_ARM_NONE_LINUX_GNUEABI)/bin/arm-none-linux-gnueabi-strip
+CC = $(PATH_ARM_NONE_LINUX_GNUEABI)/bin/arm-none-linux-gnueabi-gcc
+
 CFLAGS  = -O2 -Wall -fPIC -D_GNU_SOURCE -lpthread -shared
 #-static -lpthread -ldl
 CFLAGS += -I/home/yusufu/mywork/open-source/glib/glib-2.40/out-arm/include/glib-2.0/
@@ -26,9 +30,12 @@ endif
 ######################################################################################################################
 ifeq ($(PLATFORM), ARM_228)
 
+PATH_ARM_NONE_LINUX_GNUEABI := /opt/arm-2013.11
+STRIP = $(PATH_ARM_NONE_LINUX_GNUEABI)/bin/arm-none-linux-gnueabi-strip
+CC = $(PATH_ARM_NONE_LINUX_GNUEABI)/bin/arm-none-linux-gnueabi-gcc
+
 SOURCE_PATH=/home/s100018/mywork/linux/telechips/als-linux-official/build/tcc8925_carbit/tmp/work/cortexa5-vfp-neon-telechips-linux-gnueabi
 
-CC = arm-none-linux-gnueabi-gcc
 CFLAGS  = -O2 -Wall -fPIC -D_GNU_SOURCE -lpthread -shared
 #-static -lpthread -ldl
 CFLAGS += -I$(SOURCE_PATH)/glib-2.0/1_2.44.1-r0/image/usr/include/glib-2.0
@@ -92,6 +99,7 @@ all: $(OUT)
 
 $(OUT): $(OBJECTS)
 	$(CC)  $(OBJECTS) $(CFLAGS) $(LDFLAGS)  -o $(OUT)
+	$(STRIP) $(OUT)
 
 clean:
 	rm -f $(OBJECTS) *~ $$$$~* *.bak core config.log $(OUT)

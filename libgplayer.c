@@ -43,7 +43,7 @@ Message_handler(CustomData *player,
 			g_printerr ("Error: %s\n", error->message);
 			g_error_free (error);
 
-			gst_element_set_state (player->pipeline, GST_STATE_READY);
+			//gst_element_set_state (player->pipeline, GST_STATE_READY);
 			player-> terminate = 1;
 			break;
 		}
@@ -122,53 +122,19 @@ init_player(CustomData *player)
 	gint ret;
 	GstMessage *msg;
 	char buffer [MAX_BUF_SIZE];
-	char str_sx[8];
-	char str_sy[8];
-	char str_disp_width[8];
-	char str_disp_height[8];
-	
-	//Init varible of player
-	player_data.playing = FALSE;
-	player_data.terminate = FALSE;
-	player_data.seek_enabled = FALSE;
-	player_data.live_stream = FALSE;
-	player_data.duration = GST_CLOCK_TIME_NONE;
-	
-	sprintf(str_sx, "%d", player->windowpos.sx);
-	sprintf(str_sy, "%d", player->windowpos.sy);
-	sprintf(str_disp_width, "%d", player->windowpos.disp_width);
-	sprintf(str_disp_height, "%d", player->windowpos.disp_height);
 	
 	/* init GStreamer */
 	//gst_init (&argc, &argv);
 	gst_init (NULL, NULL);
 	
-	/* make sure we have a URI */
-	if (player->url == NULL)
-	{
-		g_print ("Usage: ./main http://192.168.1.2/abc.mp4\n");
-		g_print ("    Or ./main file:///home/root/abc.mp4\n");		
-		return -1;
-	}
-	else
-	{
-		//g_print("Input path %s\n", player->url);	
-		if(strlen(player->url)>MAX_BUF_SIZE)
-		{
-			g_print("Path is too long. [%s]\n", player->url);
-			return -1;
-		}
-		#if 1 //for TCC test
-		//(void)sprintf (buffer, "playbin uri=%s audio-sink=%s video-sink=v4l2sink overlay-top=%s overlay-left=%s overlay-width=%s overlay-height=%s %s",
-		//						player->url, AUDIO_SINK_ARG, str_sx, str_sy, str_disp_width, str_disp_height, EXTRE_ARGS);
-		(void)sprintf (buffer, "playbin uri=%s audio-sink=%s video-sink=%s %s",
-								player->url, AUDIO_SINK_ARG, VIDEO_SINK_ARG, EXTRE_ARGS);
-		#else //for PC test
-		(void)sprintf (buffer, "playbin uri=%s audio-sink=\"alsasink\"",
-								player->url);
-		#endif
-		g_print("Gst command %s\n", buffer);  		
-	}						 
+	#if 1 //for TCC test
+	(void)sprintf (buffer, "playbin uri=%s audio-sink=%s video-sink=%s %s",
+							player->url, AUDIO_SINK_ARG, VIDEO_SINK_ARG, EXTRE_ARGS);
+	#else //for PC test
+	(void)sprintf (buffer, "playbin uri=%s audio-sink=\"alsasink\"",
+							player->url);
+	#endif
+	g_print("Version:%s Gst command %s\n", GPLAYER_VERSION, buffer);  		
 	
 	/* Build the pipeline */  
 	player->pipeline = gst_parse_launch (buffer, NULL);	
@@ -177,22 +143,29 @@ init_player(CustomData *player)
 		g_printerr("Create playbin failed!!\n");
 		return -1;
 	}
-	
+	g_object_get(player->pipeline, "video-sink", &player->video_sink, NULL);
+
 	player->bus = gst_pipeline_get_bus (GST_PIPELINE(player->pipeline));
-	
 	if(player->bus == NULL)
 		g_printerr("Create bus_watch failed!!\n");
 		
-	//Below two are vilid if using main_loop;
+	/* Below two line are vilid if using main_loop */
 	//gst_bus_add_signal_watch (player_data.bus);
 	//g_signal_connect (player_data.bus, "message::state-changed", G_CALLBACK (cb_message_state_change), NULL);
 	
-	//================ Start playing ===================
+	/* Set overlay size */
+	g_object_set(player->video_sink, "overlay-set-top", player->windowpos.sx, NULL);
+	g_object_set(player->video_sink, "overlay-set-left", player->windowpos.sy, NULL);
+	g_object_set(player->video_sink, "overlay-set-width", player->windowpos.disp_width, NULL);
+	g_object_set(player->video_sink, "overlay-set-height", player->windowpos.disp_height, NULL);
+	g_object_set(player->video_sink, "overlay-set-update", 1, NULL);
+
+	/* ================ Start playing =================== */
 	ret = change_state(1);
 	if(ret != 0)
 		return ret;
-
-	/* now do...while */	
+	
+	/* now do...while */
 	do
 	{
 		msg = gst_bus_timed_pop_filtered (player_data.bus, 100 * GST_MSECOND,
@@ -225,15 +198,32 @@ open_player(gchar *url, unsigned int sx, unsigned int sy, unsigned int disp_widt
 	
 	memset(&player_data, 0, sizeof(CustomData));
 	
+	/* Init varible of player */
+	player_data.playing = FALSE;
+	player_data.terminate = FALSE;
+	player_data.seek_enabled = FALSE;
+	player_data.live_stream = FALSE;
+	player_data.duration = GST_CLOCK_TIME_NONE;
 	player_data.windowpos.sx = sx;
 	player_data.windowpos.sy = sy;
 	player_data.windowpos.disp_width = disp_width;
 	player_data.windowpos.disp_height = disp_height;
-	player_data.url = url;
+	
+	/* make sure we have an URI */
+	if(url == NULL) {
+		g_print ("URL == NULL!!!!!\n");
+		g_print ("Usage: ./main http://192.168.1.2/abc.mp4\n");
+		g_print ("    Or ./main file:///home/root/abc.mp4\n");		
+		return -1;
+	}
+	if(strlen(url) > MAX_BUF_SIZE) {
+		g_print("Path is too long. [%s]\n", url);
+		return -1;
+	}
+	(void)sprintf (player_data.url, "%s", url);
 	
 	err = pthread_create(&player_data.player_thread, NULL, play_thread, (void *)(&player_data));
-	if (err != 0)
-	{
+	if (err != 0) {
 		player_data.terminate = 1;
 		perror("Create play_thread failed! \n");
 		return -1;
@@ -264,7 +254,7 @@ reset_player(void)
 {
 	GstStateChangeReturn ret;
 	
-	/* Start playing */
+	/* Set Pipeline to Null */
 	ret = gst_element_set_state (player_data.pipeline, GST_STATE_NULL);
 	if (ret == GST_STATE_CHANGE_FAILURE) {
 		g_printerr ("Unable to set the pipeline to the NULL state.\n");
@@ -329,7 +319,7 @@ get_position (void)
 		g_printerr("Query position failed!!\n");
 		return -1;
 	}
-	return pos;
+	return GST_TIME_AS_MSECONDS(pos);
 }
 
 gint64
@@ -343,7 +333,7 @@ get_duration (void)
 		g_printerr("Query duration failed!!\n");
 		return -1;
 	}
-	return dur;
+	return GST_TIME_AS_MSECONDS(dur);
 }
 
 gboolean

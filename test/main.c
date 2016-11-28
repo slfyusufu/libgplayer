@@ -22,7 +22,7 @@ void eos_cb(void)
 int main(gint argc, gchar *argv[])
 {
 	char command;
-	gint64 pos, dur;
+	int pos, dur;
 	url = argv[1];
 	
 	EndOfStream_cb(eos_cb);
@@ -62,7 +62,7 @@ int main(gint argc, gchar *argv[])
 		{
 			pos= get_position();
 			dur= get_duration();
-			printf("postion: %ld/%ld.\n", (unsigned long)pos/1000000, (unsigned long)dur/1000000);
+			printf("postion: %d/%d.\n", pos, dur);
 		}
 		if(command == 'g')
 		{
