@@ -44,6 +44,7 @@ typedef struct _CustomData {
   gboolean    seek_enabled;
   gboolean    live_stream;
   gboolean    playing;  /* Playing or Paused */
+  gboolean    Is_pipeline_ready;
   gboolean    terminate;
   WindowPos   windowpos;
   
@@ -121,6 +122,12 @@ extern gint64 get_duration (void);
  * Get the playing status, 1: playing; 0: pause
  */
 extern gboolean get_status (void);
+
+/* IsPipelineReady
+ * 
+ * Get the pipeline status, 1: Ready; 0: NotReady
+ */
+extern gboolean IsPipelineReady (void);
 
 /* EndOfStream_cb
  * @cb_func: callback function which when eos happened.

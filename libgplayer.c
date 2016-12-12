@@ -26,7 +26,7 @@ Message_handler(CustomData *player,
 {
 	switch (GST_MESSAGE_TYPE (msg)) {
 		case GST_MESSAGE_EOS:
-			g_print ("End of stream\n");
+			g_print ("[libgplayer] End of stream\n");
 			//gst_element_set_state (player->pipeline, GST_STATE_READY);
 			player->terminate = 1;
 			if(g_eos_callback != NULL)
@@ -40,7 +40,7 @@ Message_handler(CustomData *player,
 			gst_message_parse_error (msg, &error, &debug);
 			g_free (debug);
 	
-			g_printerr ("Error: %s\n", error->message);
+			g_printerr ("[libgplayer] Error: %s\n", error->message);
 			g_error_free (error);
 
 			//gst_element_set_state (player->pipeline, GST_STATE_READY);
@@ -58,7 +58,7 @@ Message_handler(CustomData *player,
 			gst_message_parse_state_changed (msg, &old_state, &new_state, &pending_state);
 			if (GST_MESSAGE_SRC (msg) == GST_OBJECT (player->pipeline)) 
 			{
-				g_print ("Pipeline state changed from %s to %s:\n",
+				g_print ("[libgplayer] Pipeline state changed from %s to %s:\n",
 				gst_element_state_get_name (old_state), gst_element_state_get_name (new_state));
 			}
 			/* Remember whether we are in the PLAYING state or not */
@@ -77,10 +77,10 @@ Message_handler(CustomData *player,
 						//g_print ("Seeking is ENABLED from %" GST_TIME_FORMAT " to %" GST_TIME_FORMAT "\n",
 						;//GST_TIME_ARGS (start), GST_TIME_ARGS (end));
 					} else {
-						g_print ("Seeking is DISABLED for this stream.\n");
+						g_print ("[libgplayer] Seeking is DISABLED for this stream.\n");
 					}
 				} else {
-					g_printerr ("Seeking query failed.");
+					g_printerr ("[libgplayer] Seeking query failed.");
 				}
 				gst_query_unref (query);
 				
@@ -89,13 +89,13 @@ Message_handler(CustomData *player,
 				
 				/* Query the current position of the stream */
 				if (!gst_element_query_position (player->pipeline, fmt, &current)) {
-					g_printerr ("Could not query current position.\n");
+					g_printerr ("[libgplayer] Could not query current position.\n");
 				}
 				
 				/* If we didn't know it yet, query the stream duration */
 				if (!GST_CLOCK_TIME_IS_VALID (player->duration)) {
 					if (!gst_element_query_duration (player->pipeline, fmt, &player->duration)) {
-						g_printerr ("Could not query current duration.\n");
+						g_printerr ("[libgplayer] Could not query current duration.\n");
 					}
 				}
 				/* Print current position and total duration */
@@ -108,7 +108,7 @@ Message_handler(CustomData *player,
 		default:
 		{
 			if(GST_MESSAGE_SRC (msg) == GST_OBJECT (player->pipeline)){
-				g_print("GST_MSG = 0x%x.\n",GST_MESSAGE_TYPE (msg));
+				g_print("[libgplayer] GST_MSG = 0x%x.\n",GST_MESSAGE_TYPE (msg));
 			}
 			break;
 		}
@@ -134,20 +134,20 @@ init_player(CustomData *player)
 	(void)sprintf (buffer, "playbin uri=%s audio-sink=\"alsasink\"",
 							player->url);
 	#endif
-	g_print("Version:%s Gst command %s\n", GPLAYER_VERSION, buffer);  		
+	g_print("[libgplayer] Version:%s Gst command %s\n", GPLAYER_VERSION, buffer);  		
 	
 	/* Build the pipeline */  
 	player->pipeline = gst_parse_launch (buffer, NULL);	
 	if(player->pipeline == NULL)
 	{	
-		g_printerr("Create playbin failed!!\n");
+		g_printerr("[libgplayer] Create playbin failed!!\n");
 		return -1;
 	}
 	g_object_get(player->pipeline, "video-sink", &player->video_sink, NULL);
 
 	player->bus = gst_pipeline_get_bus (GST_PIPELINE(player->pipeline));
 	if(player->bus == NULL)
-		g_printerr("Create bus_watch failed!!\n");
+		g_printerr("[libgplayer] Create bus_watch failed!!\n");
 		
 	/* Below two line are vilid if using main_loop */
 	//gst_bus_add_signal_watch (player_data.bus);
@@ -160,11 +160,14 @@ init_player(CustomData *player)
 	g_object_set(player->video_sink, "overlay-set-height", player->windowpos.disp_height, NULL);
 	g_object_set(player->video_sink, "overlay-set-update", 1, NULL);
 
+	g_print("[libgplayer] Overlay-top=%d, Overlay-left=%d.",player->windowpos.sx, player->windowpos.sy);
+	g_print("[libgplayer] Overlay-width=%d, Overlay-height=%d.",player->windowpos.disp_width, player->windowpos.disp_height);
 	/* ================ Start playing =================== */
+	player->Is_pipeline_ready = 1;
 	ret = change_state(1);
 	if(ret != 0)
 		return ret;
-	
+	g_print("[libgplayer] Start Playing!!!\n");
 	/* now do...while */
 	do
 	{
@@ -176,7 +179,7 @@ init_player(CustomData *player)
 		}
 	} while(!player->terminate);
 
-	g_print("Player is terminated!\n");
+	g_print("[libgplayer] Player is terminated!\n");
 	return 0;
 }
 
@@ -211,13 +214,13 @@ open_player(gchar *url, unsigned int sx, unsigned int sy, unsigned int disp_widt
 	
 	/* make sure we have an URI */
 	if(url == NULL) {
-		g_print ("URL == NULL!!!!!\n");
-		g_print ("Usage: ./main http://192.168.1.2/abc.mp4\n");
-		g_print ("    Or ./main file:///home/root/abc.mp4\n");		
+		g_print ("[libgplayer] URL == NULL!!!!!\n");
+		g_print ("[libgplayer] Usage: ./main http://192.168.1.2/abc.mp4\n");
+		g_print ("                 Or ./main file:///home/root/abc.mp4\n");		
 		return -1;
 	}
 	if(strlen(url) > MAX_BUF_SIZE) {
-		g_print("Path is too long. [%s]\n", url);
+		g_print("[libgplayer] Path is too long. [%s]\n", url);
 		return -1;
 	}
 	(void)sprintf (player_data.url, "%s", url);
@@ -225,7 +228,7 @@ open_player(gchar *url, unsigned int sx, unsigned int sy, unsigned int disp_widt
 	err = pthread_create(&player_data.player_thread, NULL, play_thread, (void *)(&player_data));
 	if (err != 0) {
 		player_data.terminate = 1;
-		perror("Create play_thread failed! \n");
+		perror("[libgplayer] Create play_thread failed! \n");
 		return -1;
 	}
 	return 0;
@@ -257,7 +260,7 @@ reset_player(void)
 	/* Set Pipeline to Null */
 	ret = gst_element_set_state (player_data.pipeline, GST_STATE_NULL);
 	if (ret == GST_STATE_CHANGE_FAILURE) {
-		g_printerr ("Unable to set the pipeline to the NULL state.\n");
+		g_printerr ("[libgplayer] Unable to set the pipeline to the NULL state.\n");
 		gst_object_unref (player_data.pipeline);
 		return -1;
 	}
@@ -277,11 +280,12 @@ change_state(gboolean state)
 		ret = gst_element_set_state (player_data.pipeline, GST_STATE_PAUSED);
 	
 	if(ret == GST_STATE_CHANGE_FAILURE) {
-		g_printerr ("Unable to set the pipeline to the %s state.\n", (state?"playing":"pause"));
+		g_printerr ("[libgplayer] Unable to set the pipeline to the %s state.\n", (state?"playing":"pause"));
 		gst_object_unref (player_data.pipeline);
 		return -1;
 	} else if(ret == GST_STATE_CHANGE_NO_PREROLL) {	
 		player_data.live_stream = TRUE;
+		g_print("[libgplayer] Stream is live!!!\n");
 	}
 	player_data.playing = state;
 	
@@ -299,11 +303,11 @@ seek_player(gint64 seek_pos)
 									GST_SECOND * seek_pos);
 		if(!ret)
 		{
-			g_printerr("Seek error!!\n");
+			g_printerr("[libgplayer] Seek error!!\n");
 			return -1;
 		}
 	} else {
-		g_printerr("This stream can not be seek!!\n");
+		g_printerr("[libgplayer] This stream can not be seek!!\n");
 	}
 	return 0;
 }
@@ -316,7 +320,7 @@ get_position (void)
 
 	if (!gst_element_query_position (player_data.pipeline, format, &pos))
 	{
-		g_printerr("Query position failed!!\n");
+		g_printerr("[libgplayer] Query position failed!!\n");
 		return -1;
 	}
 	return GST_TIME_AS_MSECONDS(pos);
@@ -330,7 +334,7 @@ get_duration (void)
 
 	if(!gst_element_query_duration (player_data.pipeline, format, &dur)) 
 	{
-		g_printerr("Query duration failed!!\n");
+		g_printerr("[libgplayer] Query duration failed!!\n");
 		return -1;
 	}
 	return GST_TIME_AS_MSECONDS(dur);
@@ -341,19 +345,25 @@ get_status (void)
 {
 	return player_data.playing;
 }
+gboolean
+IsPipelineReady (void)
+{
+	return player_data.Is_pipeline_ready;
+}
 
 gint
 release_player(void)
 {	
 	/* clean up */
-	g_print("Play finished! Start to Free!\n");
+	g_print("[libgplayer] Play finished! Start to Free!\n");
 	if(player_data.pipeline != NULL)
 	{
 		gst_element_set_state (player_data.pipeline, GST_STATE_NULL);
 		player_data.terminate = 1;
+		player_data.Is_pipeline_ready = 0;
 		gst_object_unref (player_data.pipeline);
 	}
-	g_print("Player Released and Freed!\n");
+	g_print("[libgplayer] Player Released and Freed!\n");
 
 	return 0;
 }
