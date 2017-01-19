@@ -45,6 +45,8 @@ Message_handler(CustomData *player,
 
 			//gst_element_set_state (player->pipeline, GST_STATE_READY);
 			player-> terminate = 1;
+			if(g_eos_callback != NULL)
+				g_eos_callback();
 			break;
 		}
 		case GST_MESSAGE_CLOCK_LOST: {
@@ -122,11 +124,15 @@ init_player(CustomData *player)
 	gint ret;
 	GstMessage *msg;
 	char buffer [MAX_BUF_SIZE];
+	clock_t clock_start, clock_end;
 	
+	clock_start = clock();
 	/* init GStreamer */
 	//gst_init (&argc, &argv);
 	gst_init (NULL, NULL);
-	
+	clock_end = clock();
+	g_printerr("[libgplayer] init time = (%ld)us.\n",clock_end - clock_start);
+	clock_start = clock();
 	#if 1 //for TCC test
 	(void)sprintf (buffer, "playbin uri=%s audio-sink=%s video-sink=%s %s",
 							player->url, AUDIO_SINK_ARG, VIDEO_SINK_ARG, EXTRE_ARGS);
@@ -143,6 +149,9 @@ init_player(CustomData *player)
 		g_printerr("[libgplayer] Create playbin failed!!\n");
 		return -1;
 	}
+	clock_end = clock();
+	g_printerr("[libgplayer] pipeline time = (%ld)us.\n",clock_end - clock_start);
+	clock_start = clock();
 	g_object_get(player->pipeline, "video-sink", &player->video_sink, NULL);
 
 	player->bus = gst_pipeline_get_bus (GST_PIPELINE(player->pipeline));
@@ -160,26 +169,40 @@ init_player(CustomData *player)
 	g_object_set(player->video_sink, "overlay-set-height", player->windowpos.disp_height, NULL);
 	g_object_set(player->video_sink, "overlay-set-update", 1, NULL);
 
-	g_print("[libgplayer] Overlay-top=%d, Overlay-left=%d.",player->windowpos.sx, player->windowpos.sy);
-	g_print("[libgplayer] Overlay-width=%d, Overlay-height=%d.",player->windowpos.disp_width, player->windowpos.disp_height);
+	g_print("[libgplayer] Overlay-top=%d, Overlay-left=%d.\n",player->windowpos.sx, player->windowpos.sy);
+	g_print("[libgplayer] Overlay-width=%d, Overlay-height=%d.\n",player->windowpos.disp_width, player->windowpos.disp_height);
 	/* ================ Start playing =================== */
-	player->Is_pipeline_ready = 1;
+	clock_end = clock();
+	g_printerr("[libgplayer] overlay time = (%ld)us.\n",clock_end - clock_start);
+	clock_start = clock();
 	ret = change_state(1);
-	if(ret != 0)
-		return ret;
+	//if(ret != 0)
+	//	return ret;
+	clock_end = clock();
+	g_printerr("[libgplayer] change time = (%ld)us.\n",clock_end - clock_start);
+	player->Is_pipeline_ready = 1;
 	g_print("[libgplayer] Start Playing!!!\n");
 	/* now do...while */
-	do
+	while(!player->terminate)
 	{
-		msg = gst_bus_timed_pop_filtered (player_data.bus, 100 * GST_MSECOND,
+		msg = gst_bus_timed_pop_filtered (player->bus, 10 * GST_MSECOND,
         GST_MESSAGE_STATE_CHANGED | GST_MESSAGE_ERROR | GST_MESSAGE_EOS | GST_MESSAGE_DURATION | GST_MESSAGE_CLOCK_LOST);
         
         if (msg != NULL) {
 			Message_handler (player, msg);
 		}
-	} while(!player->terminate);
-
+	} 
 	g_print("[libgplayer] Player is terminated!\n");
+	
+	g_print("[libgplayer] Play finished! Start to Free!\n");
+	if(player->pipeline != NULL)
+	{
+		gst_element_set_state (player->pipeline, GST_STATE_NULL);
+		player->Is_pipeline_ready = 0;
+		gst_object_unref (player->bus);
+		gst_object_unref (player->pipeline);
+	}
+
 	return 0;
 }
 
@@ -188,7 +211,7 @@ play_thread(void *arg)
 {
 	CustomData *player = (CustomData *)arg;
 	
-	pthread_detach(pthread_self());
+	//pthread_detach(pthread_self());
 	init_player(player);
 	pthread_exit(0);
 	return NULL;
@@ -273,7 +296,8 @@ gint
 change_state(gboolean state)
 {
 	GstStateChangeReturn ret;
-	
+	if (player_data.terminate)
+		return 0;
 	if(state)
 		ret = gst_element_set_state (player_data.pipeline, GST_STATE_PLAYING);
 	else
@@ -355,14 +379,8 @@ gint
 release_player(void)
 {	
 	/* clean up */
-	g_print("[libgplayer] Play finished! Start to Free!\n");
-	if(player_data.pipeline != NULL)
-	{
-		gst_element_set_state (player_data.pipeline, GST_STATE_NULL);
-		player_data.terminate = 1;
-		player_data.Is_pipeline_ready = 0;
-		gst_object_unref (player_data.pipeline);
-	}
+	player_data.terminate = 1;
+	pthread_join(player_data.player_thread, NULL);
 	g_print("[libgplayer] Player Released and Freed!\n");
 
 	return 0;

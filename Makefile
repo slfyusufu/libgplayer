@@ -31,8 +31,8 @@ endif
 ifeq ($(PLATFORM), ARM_228)
 
 PATH_ARM_NONE_LINUX_GNUEABI := /opt/arm-2013.11
-STRIP = $(PATH_ARM_NONE_LINUX_GNUEABI)/bin/arm-none-linux-gnueabi-strip
 CC = $(PATH_ARM_NONE_LINUX_GNUEABI)/bin/arm-none-linux-gnueabi-gcc
+STRIP = $(PATH_ARM_NONE_LINUX_GNUEABI)/bin/arm-none-linux-gnueabi-strip
 
 SOURCE_PATH=/home/s100018/mywork/linux/telechips/als-linux-official/build/tcc8925_carbit/tmp/work/cortexa5-vfp-neon-telechips-linux-gnueabi
 
@@ -57,8 +57,8 @@ export LD_LIBRARY_PATH=/home/yusufu/mywork/open-source/glib/glib-2.40/out-pc/lib
 export LD_LIBRARY_PATH=/home/yusufu/mywork/open-source/gstreamer/gst-out/lib:$LD_LIBRARY_PATH
 export GST_PLUGIN_PATH=/home/yusufu/mywork/open-source/gstreamer/gst-out/lib:$GST_PLUGIN_PATH
 
-#CC	= arm-none-linux-gnueabi-gcc 
 CC = gcc
+STRIP = strip
 CFLAGS  = -O2 -Wall -fPIC -D_GNU_SOURCE -lpthread -shared
 #-static -lpthread -ldl
 CFLAGS += -I/home/yusufu/mywork/open-source/glib/glib-2.40/out-pc/include
@@ -73,6 +73,7 @@ endif
 ifeq ($(PLATFORM), PC_HOME)
 
 CC = gcc
+STRIP = strip
 CFLAGS  = -O2 -Wall -fPIC -D_GNU_SOURCE -lpthread -shared 
 
 CFLAGS  += `pkg-config --cflags glib-2.0`
