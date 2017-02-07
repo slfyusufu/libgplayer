@@ -121,19 +121,21 @@ Message_handler(CustomData *player,
 static gint
 init_player(CustomData *player)
 {
-	gint ret;
 	GstMessage *msg;
 	char buffer [MAX_BUF_SIZE];
+#ifdef CHECK_TIME
 	clock_t clock_start, clock_end;
-	
 	clock_start = clock();
+#endif
 	/* init GStreamer */
 	//gst_init (&argc, &argv);
 	gst_init (NULL, NULL);
+#ifdef CHECK_TIME
 	clock_end = clock();
 	g_printerr("[libgplayer] init time = (%ld)us.\n",clock_end - clock_start);
 	clock_start = clock();
-	#if 1 //for TCC test
+#endif
+	#ifdef TCC //for TCC platform
 	(void)sprintf (buffer, "playbin uri=%s audio-sink=%s video-sink=%s %s",
 							player->url, AUDIO_SINK_ARG, VIDEO_SINK_ARG, EXTRE_ARGS);
 	#else //for PC test
@@ -149,9 +151,11 @@ init_player(CustomData *player)
 		g_printerr("[libgplayer] Create playbin failed!!\n");
 		return -1;
 	}
+#ifdef CHECK_TIME
 	clock_end = clock();
 	g_printerr("[libgplayer] pipeline time = (%ld)us.\n",clock_end - clock_start);
 	clock_start = clock();
+#endif
 	g_object_get(player->pipeline, "video-sink", &player->video_sink, NULL);
 
 	player->bus = gst_pipeline_get_bus (GST_PIPELINE(player->pipeline));
@@ -162,24 +166,28 @@ init_player(CustomData *player)
 	//gst_bus_add_signal_watch (player_data.bus);
 	//g_signal_connect (player_data.bus, "message::state-changed", G_CALLBACK (cb_message_state_change), NULL);
 	
+	#ifdef TCC //for TCC platform
 	/* Set overlay size */
 	g_object_set(player->video_sink, "overlay-set-top", player->windowpos.sx, NULL);
 	g_object_set(player->video_sink, "overlay-set-left", player->windowpos.sy, NULL);
 	g_object_set(player->video_sink, "overlay-set-width", player->windowpos.disp_width, NULL);
 	g_object_set(player->video_sink, "overlay-set-height", player->windowpos.disp_height, NULL);
 	g_object_set(player->video_sink, "overlay-set-update", 1, NULL);
+	#endif
 
 	g_print("[libgplayer] Overlay-top=%d, Overlay-left=%d.\n",player->windowpos.sx, player->windowpos.sy);
 	g_print("[libgplayer] Overlay-width=%d, Overlay-height=%d.\n",player->windowpos.disp_width, player->windowpos.disp_height);
 	/* ================ Start playing =================== */
+#ifdef CHECK_TIME
 	clock_end = clock();
 	g_printerr("[libgplayer] overlay time = (%ld)us.\n",clock_end - clock_start);
 	clock_start = clock();
-	ret = change_state(1);
-	//if(ret != 0)
-	//	return ret;
+#endif
+	change_state(1);
+#ifdef CHECK_TIME
 	clock_end = clock();
 	g_printerr("[libgplayer] change time = (%ld)us.\n",clock_end - clock_start);
+#endif
 	player->Is_pipeline_ready = 1;
 	g_print("[libgplayer] Start Playing!!!\n");
 	/* now do...while */

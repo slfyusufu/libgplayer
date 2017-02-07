@@ -20,12 +20,15 @@
 #include <sys/time.h> // struct timeval
 #include <time.h> // clock
 
+//#define TCC
+//#define CHECK_TIME
+
 #define MAX_BUF_SIZE  1024
-//#define AUDIO_SINK_ARG "alsasink device=\"plug:mainvol\""
-#define AUDIO_SINK_ARG "pulsesink"
+#define AUDIO_SINK_ARG "alsasink device=\"plug:mainvol\""
+//#define AUDIO_SINK_ARG "pulsesink"
 #define VIDEO_SINK_ARG "v4l2sink"
 #define EXTRE_ARGS     "ring-buffer-max-size=8192000"
-#define GPLAYER_VERSION "v0.4"
+#define GPLAYER_VERSION "v0.5"
 
 typedef struct _WindowPos {
 	unsigned int sx;

@@ -17,6 +17,18 @@ void eos_cb(void)
 	release_player();
 	running = 0;
 	//do something you need, when end of stream;
+	exit(0);
+}
+
+static void signal_handler(int sig)
+{
+	printf("Aborted by signal %s...\n", strsignal(sig));
+	
+	if (running)
+		release_player();
+	exit(sig);
+	
+	signal(sig, signal_handler);
 }
 
 int main(gint argc, gchar *argv[])
@@ -25,6 +37,10 @@ int main(gint argc, gchar *argv[])
 	int pos, dur;
 	url = argv[1];
 	
+signal(SIGINT, signal_handler);
+signal(SIGTERM, signal_handler);
+signal(SIGABRT, signal_handler);
+
 	EndOfStream_cb(eos_cb);
 	open_player(url, 0, 0, 800, 480);
 

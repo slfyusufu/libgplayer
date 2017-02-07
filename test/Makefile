@@ -2,9 +2,9 @@
 # Makefile
 #
 # Makefile for gstreamer
-PLATFORM = ARM
+#PLATFORM = ARM
 #PLATFORM = ARM_228
-#PLATFORM = PC
+PLATFORM = PC
 #PLATFORM = PC_HOME
 
 ######################################################################################################################
